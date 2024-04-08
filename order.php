@@ -12,22 +12,50 @@
 	 */
 
 	
-	// Check if the request method is POST (i.e, form submitted)
+	 function retrieveOrderInfo($pdo, $email, $orderNum) {
+		// Prepare the SQL query
+		// Prepare the SQL query
+		$sql = "SELECT 
+					orders.ordernum AS order_number,
+					customer.cname AS customer_name,
+					customer.username AS username,
+					orders.quantity AS quantity,
+					orders.date_ordered AS date_ordered,
+					orders.date_deliv AS date_deliv
+				FROM orders 
+				INNER JOIN customer ON orders.custnum = customer.custnum 
+				WHERE customer.email = :email AND orders.ordernum = :orderNum";
+
+		// Prepare the statement
+		$stmt = $pdo->prepare($sql);
+
+		// Bind the parameters
+		$stmt->bindParam(':email', $email, PDO::PARAM_STR);
+		$stmt->bindParam(':orderNum', $orderNum, PDO::PARAM_STR);
+
+		// Execute the query
+		$stmt->execute();
+
+		// Fetch the result
+		$result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+		// Return the result
+		return $result;
+	}
+
+	// Check if the request method is POST (i.e., form submitted)
 	if ($_SERVER["REQUEST_METHOD"] == "POST") {
-		
 		// Retrieve the value of the 'email' field from the POST data
 		$email = $_POST['email'];
 
 		// Retrieve the value of the 'orderNum' field from the POST data
 		$orderNum = $_POST['orderNum'];
 
-
-		/*
-		 * TO-DO: Retrieve info about order from the db using provided PDO connection
-		 */
-		
+		// Retrieve info about order from the database using the provided PDO connection
+		$orderInfo = retrieveOrderInfo($pdo, $email, $orderNum);
 	}
-// Closing PHP tag  ?> 
+		
+?> 
 
 <!DOCTYPE>
 <html>
@@ -85,24 +113,18 @@
 					</form>
 				</div>
 				
-				<!-- 
-				  -- TO-DO: Check if variable holding order is not empty. Make sure to replace null with your variable!
-				  -->
-				
-				<?php if (!empty(null)): ?>
+				<?php if (!empty($orderInfo)): ?>
 					<div class="order-details">
-
-						<!-- 
-				  		  -- TO DO: Fill in ALL the placeholders for this order from the db
-  						  -->
-						<h1>Order Details</h1>
-						<p><strong>Name: </strong> <?= '' ?></p>
-				        	<p><strong>Username: </strong> <?= '' ?></p>
-				        	<p><strong>Order Number: </strong> <?= '' ?></p>
-				        	<p><strong>Quantity: </strong> <?= '' ?></p>
-				        	<p><strong>Date Ordered: </strong> <?= '' ?></p>
-				        	<p><strong>Delivery Date: </strong> <?= '' ?></p>
-				      
+						<!-- TO DO: Fill in ALL the placeholders for this order from the db -->
+						<?php foreach ($orderInfo as $order): ?>
+							<h1>Order Details</h1>
+							<p><strong>Name: </strong> <?= $order['customer_name'] ?></p>
+							<p><strong>Username: </strong> <?= $order['username'] ?></p>
+							<p><strong>Order Number: </strong> <?= $order['order_number'] ?></p>
+							<p><strong>Quantity: </strong> <?= $order['quantity'] ?></p>
+							<p><strong>Date Ordered: </strong> <?= $order['date_ordered'] ?></p>
+							<p><strong>Delivery Date: </strong> <?= $order['date_deliv'] ?></p>
+						<?php endforeach; ?>
 					</div>
 				<?php endif; ?>
 
